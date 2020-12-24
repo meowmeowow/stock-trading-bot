@@ -10,8 +10,8 @@ key = 'PKBWMGEH1NCBWH953XVQ'
 secert_key = 'N1SpfwrKlaRJdkUNkAKal5EdDkT5d2x5kR7x4K7G'
 
 ws_url = 'wss://data.alpaca.markets'
-conn = tradeapi.stream2.StreamConn('PKBWMGEH1NCBWH953XVQ', 'N1SpfwrKlaRJdkUNkAKal5EdDkT5d2x5kR7x4K7G', base_url='https://paper-api.alpaca.markets',data_url=ws_url, data_stream='alpacadatav1')
-api = tradeapi.REST('PKBWMGEH1NCBWH953XVQ', 'N1SpfwrKlaRJdkUNkAKal5EdDkT5d2x5kR7x4K7G', base_url='https://paper-api.alpaca.markets') 
+conn = tradeapi.stream2.StreamConn(key, secert_key, base_url='https://paper-api.alpaca.markets',data_url=ws_url, data_stream='alpacadatav1')
+api = tradeapi.REST(key, secert_key, base_url='https://paper-api.alpaca.markets') 
 
 class Stock:
   def __init__(self, code,currentPrice,percentChange):
@@ -28,7 +28,20 @@ class Stock:
   def set_CurrentPrice(self,input):
   	self.currentPrice = input
   ##########
+class OwnedStock(Stock):
+    def __init__(self,code,currentPrice,percentChange,boughtPrice):
+        super().__init__(code,currentPrice,percentChange)
+        self.boughtPrice = boughtPrice
+    ##########
+    def get_BoughtPrice(self):
+      return(boughtPrice)
+    def set_BoughtPrice(self,input):
+      self.boughtPrice = input
+    ##########
 
+class IntrestedStock(Stock):
+    def __init__(self,code,currentPrice,percentChange):
+        super().__init__(code,currentPrice,percentChange)
 
 
 class Owner():
@@ -102,7 +115,7 @@ def add_stocks(allStocks,buyer):
     else:
       #stocks.append(allStocks[i])
       #print(allStocks[i])
-      newStock = Stock(allStocks[i],info_about_stock[1],info_about_stock[0])
+      newStock = IntrestedStock(allStocks[i],info_about_stock[1],info_about_stock[0])
       buyer.i_stocks.append(newStock)
 
 
@@ -150,9 +163,11 @@ def start(buyer):
   print_stock(buyer.i_stocks)
 
   while(True):
-    wait_for_market_open()
+    #wait_for_market_open()
+    # do other stuff
     account = api.get_account()
     print(account)
+    break
 
   #ws_start()
 
