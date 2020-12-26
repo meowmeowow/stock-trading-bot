@@ -30,7 +30,7 @@ class OwnedStock(Stock):
     def __init__(self,code,currentPrice,percentChange,boughtPrice,amount):
         super().__init__(code,currentPrice,percentChange)
         self.boughtPrice = boughtPrice
-        self.amount = amount # check if this works
+        self.amount = amount 
     ##########
     def get_BoughtPrice(self):
       return(boughtPrice)
@@ -74,9 +74,7 @@ class Owner():
 
 
       self.i_stocks.remove(stock)
-      #print(value.code)
       self.o_stocks.append(value)
-      #print("added" + value.code)
 
 
 
@@ -84,7 +82,6 @@ class Owner():
       percentChangePerStock = ((float(stock.currentPrice)-float(stock.boughtPrice))/float(stock.boughtPrice))*100
       return(percentChangePerStock)
   def stock_profit(self):
-    #print(float(self.money),float(self.money_limit))
     for i, stock in enumerate(self.o_stocks[:]):
       change = self.compare_money_made(stock)
       if change == 0:
@@ -109,17 +106,11 @@ class Owner():
 
 
   def buy(self,intrestedStock,num,limit_cash):
-    #try:
-    #print(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange)
     num = self.get_amount_with_cash(limit_cash,intrestedStock.currentPrice) -1
-    #print(num)
     if 1 == 1:
       try:
         info = self.get_info_stocks(intrestedStock.code)
-        #newStock = OwnedStock(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange,info[1],amount_of_stock)
-
         newStock = OwnedStock(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange,info[1],num)
-        #print(newStock.code)
       except:
         print("failed")
       try:
@@ -129,37 +120,20 @@ class Owner():
         type='market',
         qty=num,
         time_in_force='day',
-        #order_class='bracket',
-        #take_profit=dict(
-        #    limit_price='305.0',
-        #),
-        #stop_loss=dict(
-        #    stop_price='295.5',
-        #    limit_price='295.5',
-        #)
         )
-        #print(intrestedStock.code)
         return(newStock)
       except:
         return(False)
 		
   def sell(self,ownedStock):
-    # make sure it only removes stuff that goes through
     try:
-      api.submit_order(
+      api.submit_order( # check if order went through
         symbol=ownedStock.code,
         side='sell',
         type='market',
         qty=ownedStock.amount,
         time_in_force='day',
-        #order_class='bracket',
-        #take_profit=dict(
-        #    limit_price='305.0',
-        #),
-        #stop_loss=dict(
-        #    stop_price='295.5',
-        #    limit_price='295.5',
-        #)
+
         )
     except:
       pass
@@ -176,7 +150,6 @@ class Owner():
       self.i_stocks[i].currentPrice = info[1]
       self.i_stocks[i].percentChange = info[0]
   def update_money(self):
-    #updates money + stocks owned
     account = api.get_account()
     self.money = account.cash 
     
@@ -196,16 +169,11 @@ class Owner():
   def sort_stocks_i(self):
     for i in range(1,len(self.i_stocks)):
         item_to_insert = self.i_stocks[i].percentChange
-        # And keep a reference of the index of the previous element
         j = i - 1
-        # Move all items of the sorted segment forward if they are larger than
-        # the item to insert
         while j >= 0 and self.i_stocks[j].percentChange > item_to_insert:
             self.i_stocks[j + 1].percentChange = self.i_stocks[j].percentChange
             j -= 1
-        # Insert the item
         self.i_stocks[j + 1].percentChange = item_to_insert
-    #self.print_stock()
 
   def get_info_stocks(self,stock):
     try:
@@ -216,15 +184,12 @@ class Owner():
       week_close = aapl_bars[-1].c
       percent_change = (week_close - week_open) / week_open * 100
       currentValue = week_close
-      #print(stock,week_open,week_close)
       return([percent_change,currentValue])
     except:
       return(False)
 
   def add_stocks(self,allStocks):
-    #stocks = []
     for i in range(len(allStocks)):
-      #print(allStocks[i])
 
       x = True
       if len(self.i_stocks) != 0:
@@ -238,8 +203,6 @@ class Owner():
       if info_about_stock == False:
         continue
       else:
-        #stocks.append(allStocks[i])
-        #print(allStocks[i])
         newStock = self.add(allStocks[i],info_about_stock[1],info_about_stock[0])
 
 
@@ -283,11 +246,6 @@ class Owner():
     return (allStocks)
     
 
-  #def find_stocks(self):
-  #  allStocks = ['F?p=ES=F', 'F?p=YM=F', 'F?p=NQ=F', 'FCEL', 'SRNE', 'MGNI', 'WHGRF', 'AEBZY', 'FBASF', 'LGF-A', 'LGF-B', 'LMND', 'GWLLF', 'SBGI', 'PMVP', 'CPYYF', 'NVAX', 'ALFFF', 'RIDE', 'M', 'NDBKY', 'LLDTF', 'VEDL', 'LYG', 'MGA', 'GCPEF', 'LESL', 'SWN']
-  # return (allStocks)
-
-
 def time_to_market_close():
   clock = api.get_clock()
   return (clock.next_close - clock.timestamp).total_seconds()
@@ -299,8 +257,6 @@ def wait_for_market_open():
     time_to_open = (clock.next_open - clock.timestamp).total_seconds()
     print(time_to_open)
     time.sleep(round(time_to_open))
-def wait_for_market_open():
-  pass
 
 def check_if_market_open():
   clock = api.get_clock()
@@ -313,9 +269,9 @@ def start():
   buyer = Owner(float(account.cash))
 
   time_min = 20
-  buyer.limit = 50
-  limit_cash = 400
-  buyer.money_limit = 20000
+  buyer.limit = 100
+  limit_cash = 250
+  buyer.money_limit = 25000
   
 
 
@@ -327,8 +283,8 @@ def start():
     buyer.update_owned_stocks_start()
 
     while (True):
-      #if check_if_market_open() == False: 
-      #  break
+      if check_if_market_open() == False: 
+        break
       if time_to_market_close() <= 60*60:
         buyer.sell_everything()
         buyer.clear_everything()
@@ -358,53 +314,8 @@ def start():
       buyer.print_stock_i()
       print("   ")
       time.sleep(time_min*60) # change this
-    break
     
 
 start()
 
 
-#api.list_orders()
-"""
-def parse_args(argv):
-  parser = argparse.ArgumentParser(
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    description=__doc__)
-
-  parser.add_argument("-t", "--test", dest="test_flag", 
-                    default=False,
-                    action="store_true",
-                    help="Run test function")
-  parser.add_argument("--log-level", type=str,
-                      choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                      help="Desired console log level")
-  parser.add_argument("-d", "--debug", dest="log_level", action="store_const",
-                      const="DEBUG",
-                      help="Activate debugging")
-  parser.add_argument("-q", "--quiet", dest="log_level", action="store_const",
-                      const="CRITICAL",
-                      help="Quite mode")
-  #parser.add_argument("files", type=str, nargs='+')
-
-  args = parser.parse_args(argv[1:])
-
-  return parser, args
-
-
-def main(argv, stdout, environ):
-  buyer = Owner()
-
-  if sys.version_info < (3, 0): reload(sys); sys.setdefaultencoding('utf8')
-
-  parser, args = parse_args(argv)
-
-  logging.basicConfig(format="[%(asctime)s] %(levelname)-8s %(message)s", 
-                    datefmt="%m/%d %H:%M:%S", level=args.log_level)
-
-  if args.test_flag:  test();   return
-
-  start(buyer)
-
-if __name__ == "__main__":
-  main(sys.argv, sys.stdout, os.environ)
-  """
