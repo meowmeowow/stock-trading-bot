@@ -56,7 +56,8 @@ class Owner():
     self.money = input
 
   def find_buy(self,limit_cash,amount_of_stock):
-    #starting_cash = api.account.cash  ????????????
+    if self.limit-len(self.o_stocks)  == 0: # also money for amount of stocks lol
+      return()
     for i, stock in enumerate(self.i_stocks[:]):
       try:
         value = self.buy(stock, amount_of_stock)
@@ -64,8 +65,9 @@ class Owner():
       except:
         continue
       if value == False:
-        print()
+        print("failed")
         continue
+
 
       self.i_stocks.remove(stock)
       #print(value.code)
@@ -73,11 +75,11 @@ class Owner():
       #print("added" + value.code)
 
 
+
   def compare_money_made(self,stock):
       percentChangePerStock = ((stock.currentPrice-stock.boughtPrice)/stock.boughtPrice)*100
       return(percentChangePerStock)
   def stock_profit(self):
-    #for i in range(len(self.o_stocks)):
     for i, stock in enumerate(self.o_stocks[:]):
       change = self.compare_money_made(stock)
       if change == 0:
@@ -95,7 +97,13 @@ class Owner():
           self.sell(stock)
           self.o_stocks.remove(stock)
           print("sold")
-
+  def sell_everything(self):
+    for i, stock in enumerate(self.o_stocks[:]):
+      self.sell(stock)
+      self.o_stocks.remove(stock)
+  def clear_everything():
+    self.o_stocks = []
+    self.i_stocks = []
 
   def buy(self,intrestedStock,num):
     #try:
@@ -277,70 +285,49 @@ def wait_for_market_open():
     time_to_open = (clock.next_open - clock.timestamp).total_seconds()
     print(time_to_open)
     time.sleep(round(time_to_open))
-
+def wait_for_market_open():
+  pass
+def check_if_market_open():
+  clock = api.get_clock()
+  return(clock.is_open)
 
 
 
 def start(buyer):
-  while(True):
-    # wait_for_market_open() check if this works 
-    #add stocks to already in account to list
-    #buyer.print_stock_o()
+  # add checking money so no over limit and amount of stocks are based off that
+  time_min = 30
+  buyer.limit = 5
+  account = api.get_account()
+  #money limit var
+  print(time_to_market_close())
 
-    allStocks = buyer.find_stocks()
-    buyer.add_stocks(allStocks)
-    buyer.update_i()
+  while(False):
+    api.cancel_all_orders()
+    wait_for_market_open() 
 
+    # update account for money and stocks owned
+    while False:
+      if check_if_market_open() == False: # this shouldn't ever be used ...
+        break
+      if time_to_market_close() =< 60*60:
+        buyer.sell_everything()
+        buyer.clear_everything()
+        break
+      buyer.update_o()
+      buyer.update_i()
+      if len(buyer.o_stocks) != 0:
+        buyer.stock_profit() # edit this for more uhh 
+      allStocks = buyer.find_stocks()
+      buyer.add_stocks(allStocks)
+      buyer.update_i()
+      buyer.sort_stocks_i()
 
-    buyer.sort_stocks_i()
-
-
-    print("i stocks before being bought: ")
-    buyer.print_stock_i()
-
-    buyer.find_buy(100,10)
-
-    print("i stocks after being bought: ")
-    buyer.print_stock_i()
-
-    print("o stocks after being bought: ")
-    buyer.print_stock_o()
-
-    
-    #update owned stocks
-    print("selling")
-    time.sleep(1)
-
-    buyer.update_o() # this doesnt work well
-    buyer.print_stock_o()
-    buyer.stock_profit()
-    print("o stocks after being sold: ")
-
-    buyer.print_stock_o()
-    break
-
-
-    # make a function that checks if a stock increases in the past 30 mins
-
-
-    #check if stocks owned decrease in price UPDATE EVERYTHING TO MINUETE
-    #if some decrease by a certian amount than sell them
-    # then buy more 
-    # also add time stuff
-    #restart everything at the end of the day
+      buyer.find_buy(100,10) # check if need more stuff
+      time.sleep(time_min*60)
 
 
 
-    #account = api.get_account()
-    
-
-  #ws_start()
-
-  #@conn.on(r'^account_updates$') 
-  ##start WebSocket in a thread
-  #ws_thread = threading.Thread(target=ws_start, daemon=True)
-  #ws_thread.start()
-  #time.sleep(30)
+#api.list_orders()
 
 def parse_args(argv):
   parser = argparse.ArgumentParser(
