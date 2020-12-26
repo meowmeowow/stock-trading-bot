@@ -1,10 +1,11 @@
-import os, sys, argparse
 import alpaca_trade_api as tradeapi
 import time
 from bs4 import BeautifulSoup
-import logging
-key = 'PKBWMGEH1NCBWH953XVQ'
-secert_key = 'N1SpfwrKlaRJdkUNkAKal5EdDkT5d2x5kR7x4K7G'
+import requests
+import re
+
+key = 'PKGXJNJ7OIUT7XVGV3UF'
+secert_key = 'iQgMfza100GBEbhifcMbhBDzFjVxdyrNNU50I1h2'
 ws_url = 'wss://data.alpaca.markets'
 
 conn = tradeapi.stream2.StreamConn(key, secert_key, base_url='https://paper-api.alpaca.markets',data_url=ws_url, data_stream='alpacadatav1')
@@ -43,8 +44,9 @@ class IntrestedStock(Stock):
 
 
 class Owner():
-  def __init__(self):
+  def __init__(self,ogMoney):
     self.money = 0
+    self.ogMoney = ogMoney
     self.o_stocks = []
     self.i_stocks = []
     self.account = api.get_account()
@@ -54,16 +56,20 @@ class Owner():
     self.money = input
 
   def find_buy(self,limit_cash,amount_of_stock):
-    if self.limit-len(self.o_stocks)  == 0: # also money for amount of stocks lol
-      return()
+    if float(self.money) <= (float(self.ogMoney)-float(self.money_limit)):
+      return("no money")
+
     for i, stock in enumerate(self.i_stocks[:]):
+      if self.limit-len(self.o_stocks) <= 0: 
+        return()
       try:
         value = self.buy(stock, amount_of_stock,limit_cash)
-        #print(value)
-      except:
+        
+      except Exception as e:
+        print(value.code)
+        print(e)
         continue
       if value == False:
-        print("failed")
         continue
 
 
@@ -75,28 +81,22 @@ class Owner():
 
 
   def compare_money_made(self,stock):
-      percentChangePerStock = ((stock.currentPrice-stock.boughtPrice)/stock.boughtPrice)*100
+      percentChangePerStock = ((float(stock.currentPrice)-float(stock.boughtPrice))/float(stock.boughtPrice))*100
       return(percentChangePerStock)
   def stock_profit(self):
-    if self.money <= (100000-self.money_limit):
-      return()
+    #print(float(self.money),float(self.money_limit))
     for i, stock in enumerate(self.o_stocks[:]):
       change = self.compare_money_made(stock)
       if change == 0:
-        #continue
-        self.sell(stock)
-        self.o_stocks.remove(stock)
-        print("sold")
+        continue
       elif change > 0:
-        if change > 0.1: # make this a class var
+        if change > 0.5: # make this a class var
           self.sell(stock)
           self.o_stocks.remove(stock)
-          print("sold")
       elif change < 0:
-        if change < -0.1:
+        if change < -0.5:
           self.sell(stock)
           self.o_stocks.remove(stock)
-          print("sold")
   def sell_everything(self):
     for i, stock in enumerate(self.o_stocks[:]):
       self.sell(stock)
@@ -111,7 +111,8 @@ class Owner():
   def buy(self,intrestedStock,num,limit_cash):
     #try:
     #print(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange)
-    num = buyer.get_amount_with_cash(limit_cash,intrestedStock.currentPrice) -1
+    num = self.get_amount_with_cash(limit_cash,intrestedStock.currentPrice) -1
+    #print(num)
     if 1 == 1:
       try:
         info = self.get_info_stocks(intrestedStock.code)
@@ -137,30 +138,31 @@ class Owner():
         #    limit_price='295.5',
         #)
         )
+        #print(intrestedStock.code)
         return(newStock)
       except:
         return(False)
-
-
-    #except:
-    #  return(False)
 		
   def sell(self,ownedStock):
-    api.submit_order(
-      symbol=ownedStock.code,
-      side='sell',
-      type='market',
-      qty=ownedStock.amount,
-      time_in_force='day',
-      #order_class='bracket',
-      #take_profit=dict(
-      #    limit_price='305.0',
-      #),
-      #stop_loss=dict(
-      #    stop_price='295.5',
-      #    limit_price='295.5',
-      #)
-      )
+    # make sure it only removes stuff that goes through
+    try:
+      api.submit_order(
+        symbol=ownedStock.code,
+        side='sell',
+        type='market',
+        qty=ownedStock.amount,
+        time_in_force='day',
+        #order_class='bracket',
+        #take_profit=dict(
+        #    limit_price='305.0',
+        #),
+        #stop_loss=dict(
+        #    stop_price='295.5',
+        #    limit_price='295.5',
+        #)
+        )
+    except:
+      pass
 
   def add(self,code,currentPrice,percentChange):
     newStock_i = IntrestedStock(code,currentPrice,percentChange)
@@ -281,9 +283,9 @@ class Owner():
     return (allStocks)
     
 
-  def find_stocks(self):
-    allStocks = ['F?p=ES=F', 'F?p=YM=F', 'F?p=NQ=F', 'FCEL', 'SRNE', 'MGNI', 'WHGRF', 'AEBZY', 'FBASF', 'LGF-A', 'LGF-B', 'LMND', 'GWLLF', 'SBGI', 'PMVP', 'CPYYF', 'NVAX', 'ALFFF', 'RIDE', 'M', 'NDBKY', 'LLDTF', 'VEDL', 'LYG', 'MGA', 'GCPEF', 'LESL', 'SWN']
-    return (allStocks)
+  #def find_stocks(self):
+  #  allStocks = ['F?p=ES=F', 'F?p=YM=F', 'F?p=NQ=F', 'FCEL', 'SRNE', 'MGNI', 'WHGRF', 'AEBZY', 'FBASF', 'LGF-A', 'LGF-B', 'LMND', 'GWLLF', 'SBGI', 'PMVP', 'CPYYF', 'NVAX', 'ALFFF', 'RIDE', 'M', 'NDBKY', 'LLDTF', 'VEDL', 'LYG', 'MGA', 'GCPEF', 'LESL', 'SWN']
+  # return (allStocks)
 
 
 def time_to_market_close():
@@ -299,55 +301,71 @@ def wait_for_market_open():
     time.sleep(round(time_to_open))
 def wait_for_market_open():
   pass
+
 def check_if_market_open():
   clock = api.get_clock()
   return(clock.is_open)
 
 
 
-def start(buyer):
-  # add checking money so no over limit and amount of stocks are based off that
-  time_min = 30
-  buyer.limit = 5
+def start():
   account = api.get_account()
-  money_limit = 5
+  buyer = Owner(float(account.cash))
+
+  time_min = 20
+  buyer.limit = 50
+  limit_cash = 400
+  buyer.money_limit = 20000
+  
 
 
   while(True):
     api.cancel_all_orders()
     wait_for_market_open() 
 
-    buyer.update_money() # put this around more
+    buyer.update_money() 
     buyer.update_owned_stocks_start()
 
     while (True):
-      #check to see if run out of money
-
-      if check_if_market_open() == False: # this shouldn't ever be used ...
-        break
+      #if check_if_market_open() == False: 
+      #  break
       if time_to_market_close() <= 60*60:
         buyer.sell_everything()
         buyer.clear_everything()
         break
-      buyer.update_o() # change/test where its getting data to see if its accureate
+
+      buyer.update_o() 
       buyer.update_i()
+
+
+
       if len(buyer.o_stocks) != 0:
-        buyer.update_money()
-        buyer.stock_profit() # edit this for more uhh  :(
+        buyer.stock_profit() # change values here
+
+
       allStocks = buyer.find_stocks()
       buyer.add_stocks(allStocks)
       buyer.update_i()
       buyer.sort_stocks_i()
 
-      buyer.find_buy(money_limit,10) # check if need more stuff
-      time.sleep(time_min*60)
+      buyer.update_money()
+      buyer.find_buy(limit_cash,10) 
+
+
+      print("o stocks: ")
+      buyer.print_stock_o()
+      print("i stocks: ")
+      buyer.print_stock_i()
+      print("   ")
+      time.sleep(time_min*60) # change this
     break
+    
 
-
+start()
 
 
 #api.list_orders()
-
+"""
 def parse_args(argv):
   parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -372,6 +390,7 @@ def parse_args(argv):
 
   return parser, args
 
+
 def main(argv, stdout, environ):
   buyer = Owner()
 
@@ -388,3 +407,4 @@ def main(argv, stdout, environ):
 
 if __name__ == "__main__":
   main(sys.argv, sys.stdout, os.environ)
+  """
