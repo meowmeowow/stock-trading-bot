@@ -1,11 +1,8 @@
 import os, sys, argparse
 import alpaca_trade_api as tradeapi
-import logging
 import time
 from bs4 import BeautifulSoup
-import requests
-import re
-import threading
+import logging
 key = 'PKBWMGEH1NCBWH953XVQ'
 secert_key = 'N1SpfwrKlaRJdkUNkAKal5EdDkT5d2x5kR7x4K7G'
 ws_url = 'wss://data.alpaca.markets'
@@ -52,6 +49,7 @@ class Owner():
     self.i_stocks = []
     self.account = api.get_account()
     self.limit = 0
+    self.money_limit = 20000
   def set_money(self,input):
     self.money = input
 
@@ -60,7 +58,7 @@ class Owner():
       return()
     for i, stock in enumerate(self.i_stocks[:]):
       try:
-        value = self.buy(stock, amount_of_stock)
+        value = self.buy(stock, amount_of_stock,limit_cash)
         #print(value)
       except:
         continue
@@ -80,6 +78,8 @@ class Owner():
       percentChangePerStock = ((stock.currentPrice-stock.boughtPrice)/stock.boughtPrice)*100
       return(percentChangePerStock)
   def stock_profit(self):
+    if self.money <= (100000-self.money_limit):
+      return()
     for i, stock in enumerate(self.o_stocks[:]):
       change = self.compare_money_made(stock)
       if change == 0:
@@ -104,14 +104,19 @@ class Owner():
   def clear_everything():
     self.o_stocks = []
     self.i_stocks = []
+  def get_amount_with_cash(self,limit_cash,price):
+    return(limit_cash//price)
 
-  def buy(self,intrestedStock,num):
+
+  def buy(self,intrestedStock,num,limit_cash):
     #try:
     #print(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange)
+    num = buyer.get_amount_with_cash(limit_cash,intrestedStock.currentPrice) -1
     if 1 == 1:
       try:
         info = self.get_info_stocks(intrestedStock.code)
         #newStock = OwnedStock(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange,info[1],amount_of_stock)
+
         newStock = OwnedStock(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange,info[1],num)
         #print(newStock.code)
       except:
@@ -168,9 +173,16 @@ class Owner():
       info = self.get_info_stocks(self.i_stocks[i].code)
       self.i_stocks[i].currentPrice = info[1]
       self.i_stocks[i].percentChange = info[0]
-  def update_self(self):
+  def update_money(self):
     #updates money + stocks owned
-    pass
+    account = api.get_account()
+    self.money = account.cash 
+    
+  def update_owned_stocks_start(self):
+    stocks_things = api.list_positions()
+    for i in range(len(stocks_things)):
+      new_stock = OwnedStock(stocks_things[i].symbol,stocks_things[i].current_price,stocks_things[i].change_today,stocks_things[i].current_price, stocks_things[i].qty)
+      self.o_stocks.append(new_stock)
   def update_o(self):
     for i in range(len(self.o_stocks)):
       info = self.get_info_stocks(self.o_stocks[i].code)
@@ -298,32 +310,39 @@ def start(buyer):
   time_min = 30
   buyer.limit = 5
   account = api.get_account()
-  #money limit var
-  print(time_to_market_close())
+  money_limit = 5
 
-  while(False):
+
+  while(True):
     api.cancel_all_orders()
     wait_for_market_open() 
 
-    # update account for money and stocks owned
-    while False:
+    buyer.update_money() # put this around more
+    buyer.update_owned_stocks_start()
+
+    while (True):
+      #check to see if run out of money
+
       if check_if_market_open() == False: # this shouldn't ever be used ...
         break
-      if time_to_market_close() =< 60*60:
+      if time_to_market_close() <= 60*60:
         buyer.sell_everything()
         buyer.clear_everything()
         break
-      buyer.update_o()
+      buyer.update_o() # change/test where its getting data to see if its accureate
       buyer.update_i()
       if len(buyer.o_stocks) != 0:
-        buyer.stock_profit() # edit this for more uhh 
+        buyer.update_money()
+        buyer.stock_profit() # edit this for more uhh  :(
       allStocks = buyer.find_stocks()
       buyer.add_stocks(allStocks)
       buyer.update_i()
       buyer.sort_stocks_i()
 
-      buyer.find_buy(100,10) # check if need more stuff
+      buyer.find_buy(money_limit,10) # check if need more stuff
       time.sleep(time_min*60)
+    break
+
 
 
 
