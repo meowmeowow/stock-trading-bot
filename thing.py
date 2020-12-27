@@ -110,6 +110,8 @@ class Owner():
     if 1 == 1:
       try:
         info = self.get_info_stocks(intrestedStock.code)
+        if info == False:
+          return(False)
         newStock = OwnedStock(intrestedStock.code,intrestedStock.currentPrice,intrestedStock.percentChange,info[1],num)
       except:
         print("failed")
@@ -147,6 +149,8 @@ class Owner():
   def update_i(self):
     for i in range(len(self.i_stocks)):
       info = self.get_info_stocks(self.i_stocks[i].code)
+      if info == False:
+        break
       self.i_stocks[i].currentPrice = info[1]
       self.i_stocks[i].percentChange = info[0]
   def update_money(self):
@@ -161,6 +165,8 @@ class Owner():
   def update_o(self):
     for i in range(len(self.o_stocks)):
       info = self.get_info_stocks(self.o_stocks[i].code)
+      if info == False:
+        break
       self.o_stocks[i].currentPrice = info[1]
       self.o_stocks[i].percentChange = info[0]
 
@@ -177,7 +183,8 @@ class Owner():
 
   def get_info_stocks(self,stock):
     try:
-      barset = api.get_barset(stock, 'day', limit=1)
+      #barset = api.get_barset(stock, 'day', limit=1)  
+      barset = api.get_barset(stock, 'minute', limit=40)
       aapl_bars = barset[stock]
 
       week_open = aapl_bars[0].o
@@ -315,7 +322,28 @@ def start():
       print("   ")
       time.sleep(time_min*60) # change this
     
+def test():
+  stock = "AAPL"
+  barset = api.get_barset(stock, 'day', limit=1)  #get current price
+  aapl_bars = barset[stock]
+  week_open = aapl_bars[0].o
+  week_close = aapl_bars[-1].c
+
+  account = api.get_account()
+  buyer = Owner(float(account.cash))
+
+  bars = api.get_barset("AAPL", 'minute', limit = 40)
+  week_open = aapl_bars[0].o
+  week_close = aapl_bars[-1].c
+  percent_change = (week_close - week_open) / week_open * 100
+  currentValue = week_close
+  print([percent_change,currentValue])
+
+
+  #print(bars)
+  #allStocks[i][1] = (bars["APPL"][len(bars["APPL"]) - 1].c - bars["APPL"][0].o) / bars["APPL"][0].o
+
 
 start()
 
-
+#test()
