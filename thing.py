@@ -89,15 +89,12 @@ class Owner():
       elif change > 0:
         if change > 0.5: # make this a class var
           self.sell(stock)
-          self.o_stocks.remove(stock)
       elif change < 0:
         if change < -0.5:
           self.sell(stock)
-          self.o_stocks.remove(stock)
   def sell_everything(self):
     for i, stock in enumerate(self.o_stocks[:]):
       self.sell(stock)
-      self.o_stocks.remove(stock)
   def clear_everything():
     self.o_stocks = []
     self.i_stocks = []
@@ -138,7 +135,8 @@ class Owner():
 
         )
     except:
-      pass
+      return()
+    self.o_stocks.remove(ownedStock)
 
   def add(self,code,currentPrice,percentChange):
     newStock_i = IntrestedStock(code,currentPrice,percentChange)
@@ -150,7 +148,7 @@ class Owner():
     for i in range(len(self.i_stocks)):
       info = self.get_info_stocks(self.i_stocks[i].code)
       if info == False:
-        break
+        continue
       self.i_stocks[i].currentPrice = info[1]
       self.i_stocks[i].percentChange = info[0]
   def update_money(self):
@@ -166,7 +164,7 @@ class Owner():
     for i in range(len(self.o_stocks)):
       info = self.get_info_stocks(self.o_stocks[i].code)
       if info == False:
-        break
+        continue
       self.o_stocks[i].currentPrice = info[1]
       self.o_stocks[i].percentChange = info[0]
 
